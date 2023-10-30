@@ -14,6 +14,17 @@ I want a simple architecture at first so I create the `chat` binary module insid
 
 The repository is initialized [here](https://github.com/quangkeu95/libp2p-learner/commit/bddf28e28a5ecba39e4209e1311efd763643035c)
 
+## Give me an identity address
+So every user using the chat app have an unique address, since `libp2p` is designed to work across a wide variety of networks, there should be a way to work with a lot of different addressing schemes in a consistent way. So `libp2p` using `multiaddress` (often abbreviated `multiaddr`) as a convention for encoding multiple layers of addressing info into a single "future-proof" path structure.
+An example of `multiaddr` is `/ip4/198.51.100.0/tcp/4242/p2p/QmYyQSo1c1Ym7orWxLYvCrM2EmxFTANf8wXmmE7DWjhx5N` where:
+- The client is using IPv4 protocol.
+- The client has an IPv4 address `198.51.100.0`.
+- The chat app uses TCP at port `4242`.
+- The chat app uses libp2p's registered protocol id `/p2p/`.
+- The multihash of the client public key is `QmYyQSo1c1Ym7orWxLYvCrM2EmxFTANf8wXmmE7DWjhx5N`.
 
+The `multihash` document could be found at [here](https://docs.libp2p.io/concepts/appendix/glossary/#multihash). 
+
+So a quick way to create a new network identity for the user is to use [`SwarmBuilder::with_new_identity` method](https://docs.rs/libp2p/0.52.4/libp2p/struct.SwarmBuilder.html#method.with_new_identity), or with existing keypair [`SwarmBuilder::with_existing_identity` method](https://docs.rs/libp2p/0.52.4/libp2p/struct.SwarmBuilder.html#method.with_existing_identity).
 
 
