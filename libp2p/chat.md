@@ -59,5 +59,52 @@ async fn main() -> anyhow::Result<()> {
 
 
 ## How could we communicate?
-So communication in `libp2p` is carried by transport layer, and it depends on the developer to choose the transport protocols. In the chat app we are gonna use TCP protocol with Tokio async runtime, we can configure TCP protocol with `SwarmBuilder` by calling the method [`with_tcp`](https://docs.rs/libp2p/0.52.4/libp2p/struct.SwarmBuilder.html#method.with_tcp-1). TCP configuration comes with security upgrade and multiplexer upgrade congfigurations. `libp2p` supports two security protol: `TLS 1.3` and `noise`, in this example we use `noice`. Stream multiplexing is a technique for multiple data streams could be send on a single connection. By establish a connection once, multiple procotols can run on that same connection, reduce overheard and latency in the network. Also note that some protocols already have their native streams (QUIC, WebTransport, WebRTC), so stream multiplexing is not needed in this case. In this example we use `yamux` for streams multiplexing.
+So communication in `libp2p` is carried by transport layer, and it depends on the developer to choose the transport protocols. In the chat app we are gonna use TCP protocol with Tokio async runtime, we can configure TCP protocol with `SwarmBuilder` by calling the method [`with_tcp`](https://docs.rs/libp2p/0.52.4/libp2p/struct.SwarmBuilder.html#method.with_tcp-1). TCP configuration comes with security upgrade and multiplexer upgrade congfigurations. `libp2p` supports two security protol: `TLS 1.3` and `noise`, in this example we use `noice`. Stream multiplexing is a technique for multiple data streams could be send on a single connection. By establish a connection once, multiple procotols can run on that same connection, reduce overheard and latency on the network. Also note that some protocols already have their native streams (QUIC, WebTransport, WebRTC), so stream multiplexing is not needed in this case. In this example we use `yamux` for streams multiplexing.
 
+## The network behaviour
+While transport layer define how to send bytes on the network, the [`NetworkBehaviour`](https://docs.rs/libp2p/0.52.4/libp2p/swarm/trait.NetworkBehaviour.html) define what bytes and to whom to send on the network. There are many predefined `NetworkBehaviour` in the `libp2p-rs` crate, and you can create a custom one with `#[derive(NetworkBehaviour)]`.
+
+Now our code look like this:
+```rust
+use libp2p::{noise, ping, yamux, SwarmBuilder};
+
+use tracing_error::ErrorLayer;
+use tracing_subscriber::filter::LevelFilter;
+use tracing_subscriber::prelude::*;
+
+/// Initializes a tracing Subscriber for logging
+#[allow(dead_code)]
+pub fn init_tracing_subscriber() {
+    tracing_subscriber::Registry::default()
+        .with(
+            tracing_subscriber::EnvFilter::builder()
+                .with_default_directive(LevelFilter::INFO.into())
+                .from_env_lossy(),
+        )
+        .with(ErrorLayer::default())
+        .with(tracing_subscriber::fmt::layer())
+        .init()
+}
+
+#[tokio::main]
+async fn main() -> anyhow::Result<()> {
+    init_tracing_subscriber();
+
+    let mut swarm = SwarmBuilder::with_new_identity()
+        .with_tokio()
+        .with_tcp(
+            Default::default(),
+            noise::Config::new,
+            yamux::Config::default,
+        )?
+        .with_behaviour(|_| ping::Behaviour::default())?
+        .build();
+
+    Ok(())
+}
+```
+
+I use the ping `NetworkBehaviour` as a placeholder, we will dive into the actual behaviour we need in the next section.
+
+## Pub/sub
+Publish/subscribe is a model commonly in p2p network, especically for our building chat app. `libp2p` currently uses a design called [`gossipsub`](https://github.com/libp2p/specs/blob/master/pubsub/gossipsub/README.md)
