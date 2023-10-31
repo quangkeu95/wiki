@@ -15,7 +15,7 @@ I want a simple architecture at first so I create the `chat` binary module insid
 The repository is initialized [here](https://github.com/quangkeu95/libp2p-learner/commit/bddf28e28a5ecba39e4209e1311efd763643035c)
 
 ## Give me an identity address
-So every user using the chat app have an unique address, since `libp2p` is designed to work across a wide variety of networks, there should be a way to work with a lot of different addressing schemes in a consistent way. So `libp2p` using `multiaddress` (often abbreviated `multiaddr`) as a convention for encoding multiple layers of addressing info into a single "future-proof" path structure.
+So every client in the chat network should have an unique address, since `libp2p` is designed to work across a wide variety of networks, there should be a way to work with a lot of different addressing schemes in a consistent way. So `libp2p` using `multiaddress` (often abbreviated `multiaddr`) as a convention for encoding multiple layers of addressing info into a single "future-proof" path structure.
 An example of `multiaddr` is `/ip4/198.51.100.0/tcp/4242/p2p/QmYyQSo1c1Ym7orWxLYvCrM2EmxFTANf8wXmmE7DWjhx5N` where:
 - The client is using IPv4 protocol.
 - The client has an IPv4 address `198.51.100.0`.
@@ -57,4 +57,7 @@ async fn main() -> anyhow::Result<()> {
     Ok(())
 }```
 
+
+## How could we communicate?
+So communication in `libp2p` is carried by transport layer, and it depends on the developer to choose the transport protocols. In the chat app we are gonna use TCP protocol with Tokio async runtime, we can configure TCP protocol with `SwarmBuilder` by calling the method [`with_tcp`](https://docs.rs/libp2p/0.52.4/libp2p/struct.SwarmBuilder.html#method.with_tcp-1). TCP configuration comes with security upgrade and multiplexer upgrade congfigurations. `libp2p` supports two security protol: `TLS 1.3` and `noise`, in this example we use `noice`. Stream multiplexing is a technique for multiple data streams could be send on a single connection. By establish a connection once, multiple procotols can run on that same connection, reduce overheard and latency in the network. Also note that some protocols already have their native streams (QUIC, WebTransport, WebRTC), so stream multiplexing is not needed in this case. In this example we use `yamux` for streams multiplexing.
 
