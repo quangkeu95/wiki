@@ -25,6 +25,36 @@ An example of `multiaddr` is `/ip4/198.51.100.0/tcp/4242/p2p/QmYyQSo1c1Ym7orWxLY
 
 The `multihash` document could be found at [here](https://docs.libp2p.io/concepts/appendix/glossary/#multihash). 
 
-So a quick way to create a new network identity for the user is to use [`SwarmBuilder::with_new_identity` method](https://docs.rs/libp2p/0.52.4/libp2p/struct.SwarmBuilder.html#method.with_new_identity), or with existing keypair [`SwarmBuilder::with_existing_identity` method](https://docs.rs/libp2p/0.52.4/libp2p/struct.SwarmBuilder.html#method.with_existing_identity).
+So a quick way to create a new network identity for the user is to use [`SwarmBuilder::with_new_identity` method](https://docs.rs/libp2p/0.52.4/libp2p/struct.SwarmBuilder.html#method.with_new_identity), or with existing keypair [`SwarmBuilder::with_existing_identity` method](https://docs.rs/libp2p/0.52.4/libp2p/struct.SwarmBuilder.html#method.with_existing_identity) to create the `SwarmBuilder` instance. Note that we have to call `build` method on `SwarmBuilder` instance in order to get the `Swarm` instance.
+
+Our code for now looks something like below:
+```rust
+use libp2p::SwarmBuilder;
+
+use tracing_error::ErrorLayer;
+use tracing_subscriber::filter::LevelFilter;
+use tracing_subscriber::prelude::*;
+
+/// Initializes a tracing Subscriber for logging
+#[allow(dead_code)]
+pub fn init_tracing_subscriber() {
+    tracing_subscriber::Registry::default()
+        .with(
+            tracing_subscriber::EnvFilter::builder()
+                .with_default_directive(LevelFilter::INFO.into())
+                .from_env_lossy(),
+        )
+        .with(ErrorLayer::default())
+        .with(tracing_subscriber::fmt::layer())
+        .init()
+}
+
+#[tokio::main]
+async fn main() -> anyhow::Result<()> {
+    init_tracing_subscriber();
+
+    let mut swarm = SwarmBuilder::with_new_identity();
+    Ok(())
+}```
 
 
